@@ -4,12 +4,12 @@ npm install styled-components/native --save
 */
 
 import React from 'react';
-import Styled from 'styled-components/native';
+import {View} from 'react-native'
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 
-const Container = Styled.View`
-    flex: 1;
-`;
+// const Container = Styled.View`
+//     flex: 1;
+// `;
 
 const App = () => {
   let markers= [
@@ -51,7 +51,7 @@ const App = () => {
     // },
   ]
   return (
-    <Container>
+    <View style={{flex:1}}>
       <MapView
         style={{flex: 1}}
         initialRegion={{
@@ -73,7 +73,7 @@ const App = () => {
           description="this is a marker example"
         /> */}
       </MapView>
-    </Container>
+    </View>
   );
 };
 
