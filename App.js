@@ -9,19 +9,15 @@ npm install moment-timezone --save
 import React, {useEffect, useState} from 'react';
 import {View, Text} from 'react-native'
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
-import Clock from 'react-live-clock';
 
-//import {CurrentDate} from './HeaderMenu';
 const url='mqtt://broker.hivemq.com:1883';
 //const url='mqtt://test.mosquitto.org:1883';
 const topic='server965';
+let initflag=false;
+let signalTime;
 
-//let currentTime=0;
-// const Container = Styled.View`
-//     flex: 1;
-// `;
 export function CurrentDate () {
-  
+ 
   var date = new Date();
   var date = new Date().getDate(); //To get the Current Date
   var month = new Date().getMonth() + 1; //To get the Current Month
@@ -30,29 +26,35 @@ export function CurrentDate () {
   
   var min = new Date().getMinutes(); //To get the Current Minutes
   var sec = new Date().getSeconds(); //To get the Current Seconds
-  return  (year+'.'+month+'.'+date+'. '+hours+':'+min+':'+sec);
+  return  (year+'.'+month+'.'+date+'. '+hours+'시'+min+'분'+sec+'초');
 }
 
 const App = () => {
-  const [signalState, setSignalState]= useState({currentTime:0, signalTime:'', latitude:0, longitude:0, address:''});
-  let lat=36.396314, lng=127.352202, addr, signalTime;;
+  const [addressState, setAddressState]= useState('');
+  const [signalTimeState, setSignalTimeState]= useState('');
+  const [signalState, setSignalState] = useState({currentTime:0, latitude:0, longitude:0});
+ 
+  let lat=36.396314, lng=127.352202, addr;
 
-  useEffect(() => {
-    setSignalState({signalTime:CurrentDate()});
+  function setAddress() {
+    if(initflag===true) {
+      return;
+    }
+    initflag=true;
+    setSignalTimeState(CurrentDate());
+    setInterval(()=> {
+       setSignalState({...signalState, currentTime: CurrentDate()})
+    }, 1000);
     fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=ko&key=AIzaSyDFXZTWL3wFXgrh4dQQii_lXW0v_bsDsmQ`)
     .then(res => {return res.json()})
     .then (res => {
       addr=res.results[0].formatted_address;
-      setSignalState({...signalState, address:addr});
-      console.log("addr", addr, "signal Addr", signalState.address);
+      setAddressState(addr);
     }).catch(error =>
       console.warn(error)
     );
-    setInterval(()=> {
-        setSignalState({...signalState, currentTime: CurrentDate()})
-      }, 1000);
 
-  },[]);
+  }
   
   let markers= [
     {
@@ -92,24 +94,22 @@ const App = () => {
       
     // },
   ]
-
  
   return (
      <View style={{flex:1}}>
+ 
        {/* {signalMqttCom(url, topic, sendMsg, signalState, setSignalState)} */}
       <View style={{flex:1}}>
-        <View style={{flexDirection:'row',marginTop:30}}>
-          <View style={{flex:2, marginLeft:150}}> 
-            <Text style={{fontSize:20}}>재난 앱  </Text>
-          </View>
-          <View style={{flex:1, alignItems:'flex-start'}}> 
-            <Text style={{fontSize:13}}>현재시간: {signalState.currentTime}</Text>
-          </View>
+        <View style={{flexDirection:'row', marginTop:10, justifyContent:'flex-end'}}>
+        <Text style={{fontSize:10}}>현재시간: {signalState.currentTime}</Text>
         </View>
+        <View style={{flexDirection:'row',marginTop:30, justifyContent:'center'}}>
+           <Text style={{fontSize:20}}>재난 앱  </Text>
+         </View>
         
-        <Text style={{fontSize:13,  marginTop:30, marginLeft:10}}>신호: {signalState.signalTime}</Text>
-        <Text style={{fontSize:13,marginLeft:10}}>좌표: {lat}, {lng}</Text>
-        <Text style={{fontSize:13,marginLeft:10}}>주소: {signalState.address}</Text>
+        <Text style={{fontSize:12,  marginTop:20, marginLeft:10}}>신호: {signalTimeState}</Text>
+        <Text style={{fontSize:12,marginLeft:10}}>좌표: {lat}, {lng}</Text>
+        <Text style={{fontSize:12,marginLeft:10}}>주소: {addressState}</Text>
       </View>
       <MapView
         style={{flex: 3, marginLeft:5}}
@@ -132,7 +132,7 @@ const App = () => {
           description="this is a marker example"
         /> */}
       </MapView>
-      {/* {setAddress()} */}
+      {setAddress()}
     </View>
   );
 };
