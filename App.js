@@ -9,30 +9,21 @@ npm install moment-timezone --save
 import React, {useEffect, useState} from 'react';
 import {View, Text} from 'react-native'
 import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
+import sigMqttCom from './MqttCom'
+import CurrentDate from './CurrentDate';
 
 const url='mqtt://broker.hivemq.com:1883';
+//const url='18.185.228.239:1883';
+
 //const url='mqtt://test.mosquitto.org:1883';
 const topic='server965';
 let initflag=false;
-let signalTime;
-
-export function CurrentDate () {
- 
-  var date = new Date();
-  var date = new Date().getDate(); //To get the Current Date
-  var month = new Date().getMonth() + 1; //To get the Current Month
-  var year = new Date().getFullYear(); //To get the Current Year
-  var hours = Number(new Date().getHours()); //To get the Current Hours
-  
-  var min = new Date().getMinutes(); //To get the Current Minutes
-  var sec = new Date().getSeconds(); //To get the Current Seconds
-  return  (year+'.'+month+'.'+date+'. '+hours+'시'+min+'분'+sec+'초');
-}
 
 const App = () => {
-  const [addressState, setAddressState]= useState('');
-  const [signalTimeState, setSignalTimeState]= useState('');
-  const [signalState, setSignalState] = useState({currentTime:0, latitude:0, longitude:0});
+  const [signalState, setSignalState]= useState({sigTime:'', lat:0, lng:0});
+  const [sigAddressState, setSigAddressState]= useState('');
+  const [currentTimeState, setCurrentTimeState] = useState(0);
+  // const [coordinateState, setCoordinateState] = useState({lat:0, lng:0});
  
   let lat=36.396314, lng=127.352202, addr;
 
@@ -41,29 +32,26 @@ const App = () => {
       return;
     }
     initflag=true;
-    setSignalTimeState(CurrentDate());
-    setInterval(()=> {
-       setSignalState({...signalState, currentTime: CurrentDate()})
-    }, 1000);
-    fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&language=ko&key=AIzaSyDFXZTWL3wFXgrh4dQQii_lXW0v_bsDsmQ`)
-    .then(res => {return res.json()})
-    .then (res => {
-      addr=res.results[0].formatted_address;
-      setAddressState(addr);
-    }).catch(error =>
-      console.warn(error)
-    );
+    sigMqttCom(url, topic, setSigAddressState, signalState, setSignalState);
 
+    setInterval(()=> {
+      setCurrentTimeState(CurrentDate())
+    }, 1000);
+    markers.unshift({
+        coordinate: {latitude:signalState.lat, longitude:signalState.lng},
+        title: sigAddressState,
+        description: `경도:${signalState.lat}, 위도:${signalState.lng}`,
+      })
   }
   
   let markers= [
     {
       coordinates: {
-        latitude: 36.396314,
-        longitude: 127.352202,
+        latitude: signalState.lat,
+        longitude: signalState.lng,
       },
-      title: "에세텔",
-      description: "경도:36.396314, 위도:127.352202",
+      title: sigAddressState,
+      description: `경도:${signalState.lat}, 위도:${signalState.lng}`,
       
     },
     // {
@@ -93,32 +81,34 @@ const App = () => {
     //   description: "This is the fourth best place in Portland",
       
     // },
+  
   ]
  
   return (
      <View style={{flex:1}}>
  
-       {/* {signalMqttCom(url, topic, sendMsg, signalState, setSignalState)} */}
+      {/* {signalMqttCom(url, topic, signalState, setSignalState)}  */}
       <View style={{flex:1}}>
         <View style={{flexDirection:'row', marginTop:10, justifyContent:'flex-end'}}>
-        <Text style={{fontSize:10}}>현재시간: {signalState.currentTime}</Text>
+        <Text style={{fontSize:10}}>현재시간: {currentTimeState}</Text>
         </View>
         <View style={{flexDirection:'row',marginTop:30, justifyContent:'center'}}>
-           <Text style={{fontSize:20}}>재난 앱  </Text>
+           <Text style={{fontSize:20}}>해상 안전 앱  </Text>
          </View>
         
-        <Text style={{fontSize:12,  marginTop:20, marginLeft:10}}>신호: {signalTimeState}</Text>
-        <Text style={{fontSize:12,marginLeft:10}}>좌표: {lat}, {lng}</Text>
-        <Text style={{fontSize:12,marginLeft:10}}>주소: {addressState}</Text>
+        <Text style={{fontSize:12,  marginTop:40, marginLeft:10}}>신호: {signalState.sigTime}</Text>
+        <Text style={{fontSize:12,marginLeft:10}}>좌표: {signalState.lat}, {signalState.lng}</Text>
+        <Text style={{fontSize:12,marginLeft:10}}>주소: {sigAddressState}</Text>
       </View>
-      <MapView
-        style={{flex: 3, marginLeft:5}}
-        initialRegion={{
-          latitude: 36.396314,
-        longitude: 127.352202,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
-        }}>
+      {signalState.lat ? (
+        <MapView
+          style={{flex: 3, marginLeft:5}}
+          initialRegion={{
+            latitude: signalState.lat,
+            longitude: signalState.lng,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}>
           {markers.map((marker, index) => (
           <MapView.Marker key={index}
             coordinate={marker.coordinates}
@@ -126,12 +116,15 @@ const App = () => {
             description={marker.description}
           />
           ))}
-        {/* <Marker
-          coordinate={{latitude: 37.78825, longitude: -122.4324}}
-          title="this is a marker"
-          description="this is a marker example"
-        /> */}
-      </MapView>
+        </MapView>) : ( 
+          <MapView
+            loadingEnabled={true}
+            showsMyLocationButton={true}
+            provider={PROVIDER_GOOGLE}
+          >
+          </MapView>
+        )
+      }
       {setAddress()}
     </View>
   );
