@@ -18,15 +18,16 @@ const url='mqtt://broker.hivemq.com:1883';
 //const url='mqtt://test.mosquitto.org:1883';
 const topic='server965';
 let initflag=false;
+var markers=[];
 
 const App = () => {
-  const [signalState, setSignalState]= useState({sigTime:'', lat:0, lng:0});
+  const [signalState, setSignalState]= useState({sigTime:'', lat:0, lng:0, sigFlag:false});
   const [sigAddressState, setSigAddressState]= useState('');
   const [currentTimeState, setCurrentTimeState] = useState(0);
   // const [coordinateState, setCoordinateState] = useState({lat:0, lng:0});
  
   let lat=36.396314, lng=127.352202, addr;
-
+ 
   function setAddress() {
     if(initflag===true) {
       return;
@@ -37,23 +38,44 @@ const App = () => {
     setInterval(()=> {
       setCurrentTimeState(CurrentDate())
     }, 1000);
-    markers.unshift({
-        coordinate: {latitude:signalState.lat, longitude:signalState.lng},
-        title: sigAddressState,
-        description: `경도:${signalState.lat}, 위도:${signalState.lng}`,
-      })
+    // markers.unshift({
+    //     coordinate: {latitude:signalState.lat, longitude:signalState.lng},
+    //     title: sigAddressState,
+    //     description: `경도:${signalState.lat}, 위도:${signalState.lng}`,
+    //   })
   }
-  
-  let markers= [
-    {
+  useEffect(() => {
+    sigMqttCom(url, topic, setSigAddressState, signalState, setSignalState);
+    setInterval(()=> {
+      setCurrentTimeState(CurrentDate());
+    }, 1000);
+  }, []);
+  //console.log('markers', markers, 'sigFlag', signalState.sigFlag);
+
+  if(signalState.sigFlag){
+    markers.push({
       coordinates: {
         latitude: signalState.lat,
         longitude: signalState.lng,
       },
       title: sigAddressState,
-      description: `경도:${signalState.lat}, 위도:${signalState.lng}`,
+      description: `경도:${signalState.lat}, 위도:${signalState.lng}`, 
+    });
+    setSignalState({...signalState, sigFlag:false});
+    //console.log('markers', markers);
+  }
+  
+ 
+  // let markers= [
+  //   {
+  //     coordinates: {
+  //       latitude: signalState.lat,
+  //       longitude: signalState.lng,
+  //     },
+  //     title: sigAddressState,
+  //     description: `경도:${signalState.lat}, 위도:${signalState.lng}`,
       
-    },
+  //   },
     // {
     //   coordinates: {
     //     latitude: 36.394946,
@@ -82,7 +104,7 @@ const App = () => {
       
     // },
   
-  ]
+  //]
  
   return (
      <View style={{flex:1}}>
@@ -96,7 +118,7 @@ const App = () => {
            <Text style={{fontSize:20}}>해상 안전 앱  </Text>
          </View>
         
-        <Text style={{fontSize:12,  marginTop:40, marginLeft:10}}>신호: {signalState.sigTime}</Text>
+        <Text style={{fontSize:12,  marginTop:20, marginLeft:10}}>신호: {signalState.sigTime}</Text>
         <Text style={{fontSize:12,marginLeft:10}}>좌표: {signalState.lat}, {signalState.lng}</Text>
         <Text style={{fontSize:12,marginLeft:10}}>주소: {sigAddressState}</Text>
       </View>
@@ -125,7 +147,7 @@ const App = () => {
           </MapView>
         )
       }
-      {setAddress()}
+      {/* {setAddress()} */}
     </View>
   );
 };
