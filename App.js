@@ -35,9 +35,9 @@ const App = () => {
     initflag=true;
     sigMqttCom(url, topic, setSigAddressState, signalState, setSignalState);
 
-    setInterval(()=> {
-      setCurrentTimeState(CurrentDate())
-    }, 1000);
+    // setInterval(()=> {
+    //   setCurrentTimeState(CurrentDate())
+    // }, 1000);
     // markers.unshift({
     //     coordinate: {latitude:signalState.lat, longitude:signalState.lng},
     //     title: sigAddressState,
