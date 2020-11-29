@@ -1,9 +1,11 @@
 /*
-npm install npm install react-native-maps --save
+npm install react-native-maps --save
+npm install sp-react-native-mqtt --save
 npm install styled-components/native --save
 npm install  react react-live-clock --save
 npm install react-moment --save
 npm install moment-timezone --save
+sp-react-native-mqtt
 */
 
 import React, {useEffect, useState} from 'react';
